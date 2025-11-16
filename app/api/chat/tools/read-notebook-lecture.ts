@@ -8,6 +8,6 @@ export const readNotebookLecture = tool({
         hypothetical_document: z.string(),
     }),
     execute: async ({ hypothetical_document }) => {
-        return await readDocument('notebook_lecture', hypothetical_document);
+        return await readDocument('lecture_notebook', hypothetical_document);
     },
 });
