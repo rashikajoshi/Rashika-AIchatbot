@@ -25,7 +25,7 @@ export const CITATIONS_PROMPT = `
 `;
 
 export const INTERVIEW_CONTEXT_PROMPT = `
-- Most basic questions about the interviews and teh company can be answered by reading the transcripts and primers.
+- Most basic questions about the interviews and the company can be answered by reading the transcripts and primers.
 `;
 
 export const SYSTEM_PROMPT = `
