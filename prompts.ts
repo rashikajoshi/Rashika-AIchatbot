@@ -23,8 +23,8 @@ export const CITATIONS_PROMPT = `
 - Do not ever just use [Source #] by itself and not provide the URL as a markdown link-- this is forbidden.
 `;
 
-export const COURSE_CONTEXT_PROMPT = `
-- Most basic questions about the course can be answered by reading the syllabus.
+export const INTERVIEW_CONTEXT_PROMPT = `
+- Most basic questions about the interviews and teh company can be answered by reading the transcripts and primers.
 `;
 
 export const SYSTEM_PROMPT = `
@@ -46,9 +46,9 @@ ${GUARDRAILS_PROMPT}
 ${CITATIONS_PROMPT}
 </citations>
 
-<course_context>
-${COURSE_CONTEXT_PROMPT}
-</course_context>
+<interview_context>
+${INTERVIEW_CONTEXT_PROMPT}
+</interview_context>
 
 <date_time>
 ${DATE_AND_TIME}
