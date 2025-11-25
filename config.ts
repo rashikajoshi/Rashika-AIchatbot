@@ -30,8 +30,8 @@ function getDateAndTime(): string {
 
 export const DATE_AND_TIME = getDateAndTime();
 
-export const AI_NAME = "Rangeela";
-export const OWNER_NAME = "Rashika Joshi";
+export const AI_NAME = "Bits2Boards";
+export const OWNER_NAME = "Rashika Joshi and Mahiya Poddar";
 
 export const WELCOME_MESSAGE = `Hello! I'm ${AI_NAME}, an AI assistant created by ${OWNER_NAME}.`
 
@@ -53,4 +53,4 @@ export const MODERATION_DENIAL_MESSAGE_VIOLENCE_GRAPHIC = "I can't discuss graph
 export const MODERATION_DENIAL_MESSAGE_DEFAULT = "Your message violates our guidelines. I can't answer that.";
 
 export const PINECONE_TOP_K = 40;
-export const PINECONE_INDEX_NAME = "my-ai";
+export const PINECONE_INDEX_NAME = "finalproject";
