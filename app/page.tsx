@@ -77,6 +77,37 @@ const saveMessagesToStorage = (
 };
 
 /**
+ * Helper: safely derive a title from first user message
+ * Handles both `parts`-based messages and simple `content` strings.
+ */
+const getTitleFromMessages = (
+  msgs: UIMessage[],
+  fallback: string
+): string => {
+  const firstUser = msgs.find((m) => m.role === "user");
+  if (!firstUser) return fallback;
+
+  const anyMsg = firstUser as any;
+
+  // Newer AI SDK: message.parts array
+  if (Array.isArray(anyMsg.parts)) {
+    const textPart = anyMsg.parts.find(
+      (p: any) => p && p.type === "text" && typeof p.text === "string"
+    );
+    if (textPart) {
+      return (textPart as any).text.slice(0, 40);
+    }
+  }
+
+  // Older style: content: string
+  if (typeof anyMsg.content === "string") {
+    return anyMsg.content.slice(0, 40);
+  }
+
+  return fallback;
+};
+
+/**
  * NEW: multi-conversation storage
  */
 type Conversation = {
@@ -186,9 +217,11 @@ export default function Chat() {
           "randomUUID" in crypto &&
           crypto.randomUUID()) ||
         `conv-${Date.now()}`;
-      const titleFromFirstUser =
-        legacy.messages.find((m) => m.role === "user")?.parts[0]?.text?.slice(0, 40) ||
-        "First chat";
+
+      const titleFromFirstUser = getTitleFromMessages(
+        legacy.messages,
+        "First chat"
+      );
 
       const conv: Conversation = {
         id,
@@ -219,9 +252,10 @@ export default function Chat() {
       const now = new Date().toISOString();
       const idx = prev.findIndex((c) => c.id === activeConversationId);
 
-      const titleFromFirstUser =
-        messages.find((m) => m.role === "user")?.parts[0]?.text?.slice(0, 40) ||
-        (idx >= 0 ? prev[idx].title : "New chat");
+      const titleFromFirstUser = getTitleFromMessages(
+        messages,
+        idx >= 0 ? prev[idx].title : "New chat"
+      );
 
       const updated: Conversation = {
         id: activeConversationId,
@@ -383,7 +417,7 @@ export default function Chat() {
                   variant="outline"
                   size="sm"
                   className="cursor-pointer"
-                  onClick={clearChat} // keeps same function name usage
+                  onClick={clearChat}
                 >
                   <Plus className="size-4" />
                   {CLEAR_CHAT_TEXT}
