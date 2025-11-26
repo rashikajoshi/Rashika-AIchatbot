@@ -447,17 +447,6 @@ export default function Chat() {
                 </Avatar>
                 <p className="tracking-tight">{AI_NAME}</p>
               </ChatHeaderBlock>
-              <ChatHeaderBlock className="justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="cursor-pointer"
-                  onClick={clearChat}
-                >
-                  <Plus className="size-4" />
-                  {CLEAR_CHAT_TEXT}
-                </Button>
-              </ChatHeaderBlock>
             </ChatHeader>
           </div>
         </div>
