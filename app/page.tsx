@@ -432,22 +432,25 @@ export default function Chat() {
         <div className="fixed top-0 left-64 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
           <div className="relative overflow-visible">
             <ChatHeader>
-              <ChatHeaderBlock />
-              <ChatHeaderBlock className="justify-center items-center">
-                <Avatar className="size-8 ring-1 ring-primary">
-                  <AvatarImage src="/bits2boards__1_-removebg-preview.png" />
-                  <AvatarFallback>
-                    <Image
-                      src="/bits2boards__1_-removebg-preview.png.png"
-                      alt="Logo"
-                      width={36}
-                      height={36}
-                    />
-                  </AvatarFallback>
-                </Avatar>
-                <p className="tracking-tight">{AI_NAME}</p>
-              </ChatHeaderBlock>
-            </ChatHeader>
+  <ChatHeaderBlock />
+  <ChatHeaderBlock className="justify-center items-center">
+    <Avatar className="size-8 ring-1 ring-primary">
+      <AvatarImage src="/bits2boards__1_-removebg-preview.png" />
+      <AvatarFallback>
+        <Image
+          src="/bits2boards__1_-removebg-preview.png.png"
+          alt="Logo"
+          width={36}
+          height={36}
+        />
+      </AvatarFallback>
+    </Avatar>
+    <p className="tracking-tight">{AI_NAME}</p>
+  </ChatHeaderBlock>
+  {/* empty right block to balance layout */}
+  <ChatHeaderBlock className="justify-end" />
+</ChatHeader>
+
           </div>
         </div>
         <div className="h-screen overflow-y-auto px-5 py-4 w-full pt-[88px] pb-[150px]">
