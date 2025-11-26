@@ -4,6 +4,7 @@ import { CLEAR_CHAT_TEXT } from "@/config";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Trash2 } from "lucide-react";
 
 export type ConversationSummary = {
   id: string;
@@ -15,6 +16,7 @@ type ChatSidebarProps = {
   activeId?: string;
   onSelect: (id: string) => void;
   onNewChat: () => void;
+  onDelete: (id: string) => void;   // 🔹 NEW
 };
 
 export function ChatSidebar({
@@ -22,6 +24,7 @@ export function ChatSidebar({
   activeId,
   onSelect,
   onNewChat,
+  onDelete,                        // 🔹 NEW
 }: ChatSidebarProps) {
   return (
     <aside className="h-screen w-64 border-r bg-sidebar flex flex-col">
@@ -41,11 +44,26 @@ export function ChatSidebar({
               key={conv.id}
               onClick={() => onSelect(conv.id)}
               className={cn(
-                "w-full text-left text-sm px-2 py-1 rounded-md hover:bg-accent truncate",
+                "w-full text-left text-sm px-2 py-1 rounded-md hover:bg-accent truncate flex items-center justify-between",
                 conv.id === activeId && "bg-accent"
               )}
             >
-              {conv.title || "Untitled chat"}
+              <span className="truncate">
+                {conv.title || "Untitled chat"}
+              </span>
+
+              {/* delete icon – stop click from selecting the conversation */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(conv.id);
+                }}
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
             </button>
           ))}
 
