@@ -33,7 +33,7 @@ export const DATE_AND_TIME = getDateAndTime();
 export const AI_NAME = "Prep2Pounce";
 export const OWNER_NAME = "Rashika Joshi and Mahiya Poddar";
 
-export const WELCOME_MESSAGE = `Hello! I'm ${AI_NAME}, an AI assistant created by ${OWNER_NAME}.I am here to help you prep for your interviews! Let's get started!`
+export const WELCOME_MESSAGE = `Hello! I'm ${AI_NAME}, an AI assistant here to help you prep for your interviews! Let's get started!`
 
 export const CLEAR_CHAT_TEXT = "New";
 
