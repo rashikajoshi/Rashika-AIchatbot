@@ -23,6 +23,7 @@ import { useEffect, useState, useRef } from "react";
 import { AI_NAME, CLEAR_CHAT_TEXT, OWNER_NAME, WELCOME_MESSAGE } from "@/config";
 import Image from "next/image";
 import Link from "next/link";
+import { ChatSidebar, ConversationSummary } from "@/components/ai-elements/chat-sidebar";
 
 const formSchema = z.object({
   message: z
@@ -31,37 +32,102 @@ const formSchema = z.object({
     .max(2000, "Message must be at most 2000 characters."),
 });
 
-const STORAGE_KEY = 'chat-messages';
+/**
+ * ORIGINAL single-chat storage (kept for compatibility)
+ */
+const STORAGE_KEY = "chat-messages";
 
 type StorageData = {
   messages: UIMessage[];
   durations: Record<string, number>;
 };
 
-const loadMessagesFromStorage = (): { messages: UIMessage[]; durations: Record<string, number> } => {
-  if (typeof window === 'undefined') return { messages: [], durations: {} };
+const loadMessagesFromStorage = (): {
+  messages: UIMessage[];
+  durations: Record<string, number>;
+} => {
+  if (typeof window === "undefined")
+    return { messages: [], durations: {} };
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return { messages: [], durations: {} };
 
-    const parsed = JSON.parse(stored);
+    const parsed = JSON.parse(stored) as StorageData;
     return {
       messages: parsed.messages || [],
       durations: parsed.durations || {},
     };
   } catch (error) {
-    console.error('Failed to load messages from localStorage:', error);
+    console.error("Failed to load messages from localStorage:", error);
     return { messages: [], durations: {} };
   }
 };
 
-const saveMessagesToStorage = (messages: UIMessage[], durations: Record<string, number>) => {
-  if (typeof window === 'undefined') return;
+const saveMessagesToStorage = (
+  messages: UIMessage[],
+  durations: Record<string, number>
+) => {
+  if (typeof window === "undefined") return;
   try {
     const data: StorageData = { messages, durations };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error('Failed to save messages to localStorage:', error);
+    console.error("Failed to save messages to localStorage:", error);
+  }
+};
+
+/**
+ * NEW: multi-conversation storage
+ */
+type Conversation = {
+  id: string;
+  title: string;
+  messages: UIMessage[];
+  durations: Record<string, number>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const CONVERSATIONS_KEY = "chat-conversations-v1";
+
+const loadConversationsFromStorage = (): {
+  conversations: Conversation[];
+  activeId?: string;
+} => {
+  if (typeof window === "undefined")
+    return { conversations: [], activeId: undefined };
+
+  try {
+    const stored = localStorage.getItem(CONVERSATIONS_KEY);
+    if (!stored) return { conversations: [], activeId: undefined };
+
+    const parsed = JSON.parse(stored) as {
+      conversations?: Conversation[];
+      activeId?: string;
+    };
+
+    return {
+      conversations: parsed.conversations || [],
+      activeId: parsed.activeId,
+    };
+  } catch (error) {
+    console.error("Failed to load conversations:", error);
+    return { conversations: [], activeId: undefined };
+  }
+};
+
+const saveConversationsToStorage = (
+  conversations: Conversation[],
+  activeId?: string
+) => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      CONVERSATIONS_KEY,
+      JSON.stringify({ conversations, activeId })
+    );
+  } catch (error) {
+    console.error("Failed to save conversations to localStorage:", error);
   }
 };
 
@@ -70,24 +136,114 @@ export default function Chat() {
   const [durations, setDurations] = useState<Record<string, number>>({});
   const welcomeMessageShownRef = useRef<boolean>(false);
 
-  const stored = typeof window !== 'undefined' ? loadMessagesFromStorage() : { messages: [], durations: {} };
+  // NEW: list of conversations + active one
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<
+    string | undefined
+  >(undefined);
+
+  // ORIGINAL single-chat bootstrap (still used as initial data)
+  const stored = typeof window !== "undefined"
+    ? loadMessagesFromStorage()
+    : { messages: [], durations: {} };
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
     messages: initialMessages,
   });
 
+  /**
+   * On mount: load conversations list.
+   * If none exist, bootstrap a first conversation from the old single-chat storage.
+   */
   useEffect(() => {
     setIsClient(true);
-    setDurations(stored.durations);
-    setMessages(stored.messages);
-  }, []);
 
-  useEffect(() => {
-    if (isClient) {
-      saveMessagesToStorage(messages, durations);
+    if (typeof window === "undefined") return;
+
+    const { conversations: storedConvs, activeId } =
+      loadConversationsFromStorage();
+
+    if (storedConvs.length > 0) {
+      setConversations(storedConvs);
+      const chosenId = activeId || storedConvs[0].id;
+      setActiveConversationId(chosenId);
+
+      const activeConv = storedConvs.find((c) => c.id === chosenId);
+      if (activeConv) {
+        setMessages(activeConv.messages);
+        setDurations(activeConv.durations);
+        return;
+      }
     }
-  }, [durations, messages, isClient]);
+
+    // No multi-conversation data -> bootstrap from original single-chat storage
+    const legacy = loadMessagesFromStorage();
+    if (legacy.messages.length > 0) {
+      const now = new Date().toISOString();
+      const id =
+        (typeof crypto !== "undefined" &&
+          "randomUUID" in crypto &&
+          crypto.randomUUID()) ||
+        `conv-${Date.now()}`;
+      const titleFromFirstUser =
+        legacy.messages.find((m) => m.role === "user")?.parts[0]?.text?.slice(0, 40) ||
+        "First chat";
+
+      const conv: Conversation = {
+        id,
+        title: titleFromFirstUser,
+        messages: legacy.messages,
+        durations: legacy.durations,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      setConversations([conv]);
+      setActiveConversationId(id);
+      saveConversationsToStorage([conv], id);
+      setMessages(legacy.messages);
+      setDurations(legacy.durations);
+    }
+  }, [setMessages]);
+
+  /**
+   * Whenever messages/durations or active conversation change,
+   * update the conversations list + new storage.
+   * Also keep old single-chat storage updated for compatibility.
+   */
+  useEffect(() => {
+    if (!isClient || !activeConversationId) return;
+
+    setConversations((prev) => {
+      const now = new Date().toISOString();
+      const idx = prev.findIndex((c) => c.id === activeConversationId);
+
+      const titleFromFirstUser =
+        messages.find((m) => m.role === "user")?.parts[0]?.text?.slice(0, 40) ||
+        (idx >= 0 ? prev[idx].title : "New chat");
+
+      const updated: Conversation = {
+        id: activeConversationId,
+        title: titleFromFirstUser,
+        messages,
+        durations,
+        createdAt: idx >= 0 ? prev[idx].createdAt : now,
+        updatedAt: now,
+      };
+
+      const next =
+        idx >= 0
+          ? [...prev.slice(0, idx), updated, ...prev.slice(idx + 1)]
+          : [updated, ...prev];
+
+      saveConversationsToStorage(next, activeConversationId);
+      return next;
+    });
+
+    // keep original single-thread storage in sync as well
+    saveMessagesToStorage(messages, durations);
+  }, [messages, durations, activeConversationId, isClient]);
 
   const handleDurationChange = (key: string, duration: number) => {
     setDurations((prevDurations) => {
@@ -97,8 +253,11 @@ export default function Chat() {
     });
   };
 
+  /**
+   * Welcome message for a truly new conversation (no messages yet)
+   */
   useEffect(() => {
-    if (isClient && initialMessages.length === 0 && !welcomeMessageShownRef.current) {
+    if (isClient && messages.length === 0 && !welcomeMessageShownRef.current) {
       const welcomeMessage: UIMessage = {
         id: `welcome-${Date.now()}`,
         role: "assistant",
@@ -110,10 +269,10 @@ export default function Chat() {
         ],
       };
       setMessages([welcomeMessage]);
-      saveMessagesToStorage([welcomeMessage], {});
+      setDurations({});
       welcomeMessageShownRef.current = true;
     }
-  }, [isClient, initialMessages.length, setMessages]);
+  }, [isClient, messages.length, setMessages]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -127,39 +286,104 @@ export default function Chat() {
     form.reset();
   }
 
+  /**
+   * NEW: create a fresh conversation and switch to it
+   */
+  function handleNewChat() {
+    const id =
+      (typeof crypto !== "undefined" &&
+        "randomUUID" in crypto &&
+        crypto.randomUUID()) ||
+      `conv-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    const newConv: Conversation = {
+      id,
+      title: "New chat",
+      messages: [],
+      durations: {},
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    setConversations((prev) => [newConv, ...prev]);
+    setActiveConversationId(id);
+    setMessages([]);
+    setDurations({});
+
+    // also clear legacy single-chat storage
+    saveMessagesToStorage([], {});
+  }
+
+  /**
+   * NEW: select an existing conversation from sidebar
+   */
+  function handleSelectConversation(id: string) {
+    setActiveConversationId(id);
+    const conv = conversations.find((c) => c.id === id);
+    if (conv) {
+      setMessages(conv.messages);
+      setDurations(conv.durations);
+    } else {
+      setMessages([]);
+      setDurations({});
+    }
+  }
+
+  /**
+   * ORIGINAL clearChat function name is kept,
+   * but now it behaves like "New Chat" so other parts won't break.
+   */
   function clearChat() {
-    const newMessages: UIMessage[] = [];
-    const newDurations = {};
-    setMessages(newMessages);
-    setDurations(newDurations);
-    saveMessagesToStorage(newMessages, newDurations);
+    handleNewChat();
     toast.success("Chat cleared");
   }
 
+  // data for sidebar: only id + title
+  const sidebarConversations: ConversationSummary[] = conversations.map(
+    (c) => ({
+      id: c.id,
+      title: c.title,
+    })
+  );
+
   return (
-    <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
-      <main className="w-full dark:bg-black h-screen relative">
+    <div className="flex h-screen font-sans dark:bg-black">
+      {/* LEFT: sidebar with fixed New + scrollable previous chats */}
+      <ChatSidebar
+        conversations={sidebarConversations}
+        activeId={activeConversationId}
+        onSelect={handleSelectConversation}
+        onNewChat={handleNewChat}
+      />
+
+      {/* RIGHT: existing chat UI */}
+      <main className="flex-1 w-full dark:bg-black h-screen relative">
+        <div className="absolute inset-0 bg-[url('/bits2boards__1_-removebg-preview.png')] bg-center bg-no-repeat bg-contain opacity-10 pointer-events-none" />
         <div className="fixed top-0 left-0 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
           <div className="relative overflow-visible">
             <ChatHeader>
               <ChatHeaderBlock />
               <ChatHeaderBlock className="justify-center items-center">
-                <Avatar
-                  className="size-8 ring-1 ring-primary"
-                >
-                  <AvatarImage src="/logo.png" />
+                <Avatar className="size-8 ring-1 ring-primary">
+                  <AvatarImage src="/bits2boards__1_-removebg-preview.png" />
                   <AvatarFallback>
-                    <Image src="/logo.png" alt="Logo" width={36} height={36} />
+                    <Image
+                      src="/bits2boards__1_-removebg-preview.png.png"
+                      alt="Logo"
+                      width={36}
+                      height={36}
+                    />
                   </AvatarFallback>
                 </Avatar>
-                <p className="tracking-tight">Chat with {AI_NAME}</p>
+                <p className="tracking-tight">{AI_NAME}</p>
               </ChatHeaderBlock>
               <ChatHeaderBlock className="justify-end">
                 <Button
                   variant="outline"
                   size="sm"
                   className="cursor-pointer"
-                  onClick={clearChat}
+                  onClick={clearChat} // keeps same function name usage
                 >
                   <Plus className="size-4" />
                   {CLEAR_CHAT_TEXT}
@@ -172,7 +396,12 @@ export default function Chat() {
           <div className="flex flex-col items-center justify-end min-h-full">
             {isClient ? (
               <>
-                <MessageWall messages={messages} status={status} durations={durations} onDurationChange={handleDurationChange} />
+                <MessageWall
+                  messages={messages}
+                  status={status}
+                  durations={durations}
+                  onDurationChange={handleDurationChange}
+                />
                 {status === "submitted" && (
                   <div className="flex justify-start max-w-3xl w-full">
                     <Loader2 className="size-4 animate-spin text-muted-foreground" />
@@ -197,7 +426,10 @@ export default function Chat() {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="chat-form-message" className="sr-only">
+                        <FieldLabel
+                          htmlFor="chat-form-message"
+                          className="sr-only"
+                        >
                           Message
                         </FieldLabel>
                         <div className="relative h-13">
@@ -246,10 +478,18 @@ export default function Chat() {
             </div>
           </div>
           <div className="w-full px-5 py-3 items-center flex justify-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} {OWNER_NAME}&nbsp;<Link href="/terms" className="underline">Terms of Use</Link>&nbsp;Powered by&nbsp;<Link href="https://ringel.ai/" className="underline">Ringel.AI</Link>
+            © {new Date().getFullYear()} {OWNER_NAME}
+            &nbsp;
+            <Link href="/terms" className="underline">
+              Terms of Use
+            </Link>
+            &nbsp;Powered by&nbsp;
+            <Link href="https://ringel.ai/" className="underline">
+              Ringel.AI
+            </Link>
           </div>
         </div>
       </main>
-    </div >
+    </div>
   );
 }
