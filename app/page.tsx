@@ -152,7 +152,7 @@ export default function Chat() {
                     <Image src="/bits2boards__1_-removebg-preview.png.png" alt="Logo" width={36} height={36} />
                   </AvatarFallback>
                 </Avatar>
-                <p className="tracking-tight">Chat with {AI_NAME}</p>
+                <p className="tracking-tight">{AI_NAME}</p>
               </ChatHeaderBlock>
               <ChatHeaderBlock className="justify-end">
                 <Button
