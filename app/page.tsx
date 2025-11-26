@@ -364,6 +364,40 @@ export default function Chat() {
     }
   }
 
+    /**
+   * Delete a conversation from the sidebar
+   */
+  function handleDeleteConversation(id: string) {
+    const remaining = conversations.filter((c) => c.id !== id);
+
+    let newActiveId = activeConversationId;
+    if (activeConversationId === id) {
+      newActiveId = remaining.length > 0 ? remaining[0].id : undefined;
+    }
+
+    setConversations(remaining);
+    setActiveConversationId(newActiveId);
+
+    if (newActiveId) {
+      const nextConv = remaining.find((c) => c.id === newActiveId);
+      if (nextConv) {
+        setMessages(nextConv.messages);
+        setDurations(nextConv.durations);
+      } else {
+        setMessages([]);
+        setDurations({});
+      }
+    } else {
+      // no conversations left
+      setMessages([]);
+      setDurations({});
+      saveMessagesToStorage([], {});
+    }
+
+    // update multi-conversation storage
+    saveConversationsToStorage(remaining, newActiveId);
+  }
+
   /**
    * ORIGINAL clearChat function name is kept,
    * but now it behaves like "New Chat" so other parts won't break.
@@ -385,10 +419,11 @@ export default function Chat() {
     <div className="flex h-screen font-sans dark:bg-black">
       {/* LEFT: sidebar with fixed New + scrollable previous chats */}
       <ChatSidebar
-        conversations={sidebarConversations}
-        activeId={activeConversationId}
-        onSelect={handleSelectConversation}
-        onNewChat={handleNewChat}
+      conversations={sidebarConversations}
+      activeId={activeConversationId}
+      onSelect={handleSelectConversation}
+      onNewChat={handleNewChat}
+      onDelete={handleDeleteConversation}
       />
 
       {/* RIGHT: existing chat UI */}
