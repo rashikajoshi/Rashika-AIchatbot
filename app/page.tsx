@@ -139,6 +139,7 @@ export default function Chat() {
   return (
     <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
       <main className="w-full dark:bg-black h-screen relative">
+         <div className="absolute inset-0 bg-[url('/bits2boards__1_-removebg-preview.png')] bg-center bg-no-repeat bg-contain opacity-10 pointer-events-none" />
         <div className="fixed top-0 left-0 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
           <div className="relative overflow-visible">
             <ChatHeader>
