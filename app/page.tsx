@@ -382,20 +382,32 @@ export default function Chat() {
   );
 
   return (
-    <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
-      <main className="w-full dark:bg-black h-screen relative">
-         <div className="absolute inset-0 bg-[url('/bits2boards__1_-removebg-preview.png')] bg-center bg-no-repeat bg-contain opacity-10 pointer-events-none" />
+    <div className="flex h-screen font-sans dark:bg-black">
+      {/* LEFT: sidebar with fixed New + scrollable previous chats */}
+      <ChatSidebar
+        conversations={sidebarConversations}
+        activeId={activeConversationId}
+        onSelect={handleSelectConversation}
+        onNewChat={handleNewChat}
+      />
+
+      {/* RIGHT: existing chat UI */}
+      <main className="flex-1 w-full dark:bg-black h-screen relative">
+        <div className="absolute inset-0 bg-[url('/bits2boards__1_-removebg-preview.png')] bg-center bg-no-repeat bg-contain opacity-10 pointer-events-none" />
         <div className="fixed top-0 left-0 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
           <div className="relative overflow-visible">
             <ChatHeader>
               <ChatHeaderBlock />
               <ChatHeaderBlock className="justify-center items-center">
-                <Avatar
-                  className="size-8 ring-1 ring-primary"
-                >
+                <Avatar className="size-8 ring-1 ring-primary">
                   <AvatarImage src="/bits2boards__1_-removebg-preview.png" />
                   <AvatarFallback>
-                    <Image src="/bits2boards__1_-removebg-preview.png.png" alt="Logo" width={36} height={36} />
+                    <Image
+                      src="/bits2boards__1_-removebg-preview.png.png"
+                      alt="Logo"
+                      width={36}
+                      height={36}
+                    />
                   </AvatarFallback>
                 </Avatar>
                 <p className="tracking-tight">{AI_NAME}</p>
