@@ -165,7 +165,7 @@ const saveConversationsToStorage = (
 export default function Chat() {
   const [isClient, setIsClient] = useState(false);
   const [durations, setDurations] = useState<Record<string, number>>({});
-  const welcomeMessageShownRef = useRef<boolean>(false);
+  //const welcomeMessageShownRef = useRef<boolean>(false);
 
   // NEW: list of conversations + active one
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -290,23 +290,29 @@ export default function Chat() {
   /**
    * Welcome message for a truly new conversation (no messages yet)
    */
-  useEffect(() => {
-    if (isClient && messages.length === 0 && !welcomeMessageShownRef.current) {
-      const welcomeMessage: UIMessage = {
-        id: `welcome-${Date.now()}`,
-        role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: WELCOME_MESSAGE,
-          },
-        ],
-      };
-      setMessages([welcomeMessage]);
-      setDurations({});
-      welcomeMessageShownRef.current = true;
-    }
-  }, [isClient, messages.length, setMessages]);
+  /**
+ * Welcome message for any conversation that currently has no messages
+ */
+useEffect(() => {
+  if (!isClient) return;
+
+  // if there is already at least one message, do nothing
+  if (messages.length > 0) return;
+
+  const welcomeMessage: UIMessage = {
+    id: `welcome-${Date.now()}`,
+    role: "assistant",
+    parts: [
+      {
+        type: "text",
+        text: WELCOME_MESSAGE,
+      },
+    ],
+  };
+
+  setMessages([welcomeMessage]);
+  setDurations({});
+}, [isClient, messages.length, setMessages]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
