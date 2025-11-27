@@ -6,24 +6,36 @@ import { toast } from "sonner";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
-import { ArrowUp, Eraser, Loader2, Plus, PlusIcon, Square } from "lucide-react";
+import {
+  ArrowUp,
+  Eraser,
+  Loader2,
+  Plus,
+  PlusIcon,
+  Square,
+  Paperclip, // 🔹 NEW
+} from "lucide-react";
 import { MessageWall } from "@/components/messages/message-wall";
 import { ChatHeader } from "@/app/parts/chat-header";
 import { ChatHeaderBlock } from "@/app/parts/chat-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UIMessage } from "ai";
-import { useEffect, useState, useRef } from "react";
-import { AI_NAME, CLEAR_CHAT_TEXT, OWNER_NAME, WELCOME_MESSAGE } from "@/config";
+import { useEffect, useState, useRef, type ChangeEvent } from "react"; // 🔹 ChangeEvent added
+import {
+  AI_NAME,
+  CLEAR_CHAT_TEXT,
+  OWNER_NAME,
+  WELCOME_MESSAGE,
+} from "@/config";
 import Image from "next/image";
 import Link from "next/link";
-import { ChatSidebar, ConversationSummary } from "@/components/ai-elements/chat-sidebar";
+import {
+  ChatSidebar,
+  ConversationSummary,
+} from "@/components/ai-elements/chat-sidebar";
 
 const formSchema = z.object({
   message: z
@@ -165,7 +177,6 @@ const saveConversationsToStorage = (
 export default function Chat() {
   const [isClient, setIsClient] = useState(false);
   const [durations, setDurations] = useState<Record<string, number>>({});
-  //const welcomeMessageShownRef = useRef<boolean>(false);
 
   // NEW: list of conversations + active one
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -174,9 +185,10 @@ export default function Chat() {
   >(undefined);
 
   // ORIGINAL single-chat bootstrap (still used as initial data)
-  const stored = typeof window !== "undefined"
-    ? loadMessagesFromStorage()
-    : { messages: [], durations: {} };
+  const stored =
+    typeof window !== "undefined"
+      ? loadMessagesFromStorage()
+      : { messages: [], durations: {} };
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
@@ -288,31 +300,28 @@ export default function Chat() {
   };
 
   /**
-   * Welcome message for a truly new conversation (no messages yet)
+   * Welcome message for any conversation that currently has no messages
    */
-  /**
- * Welcome message for any conversation that currently has no messages
- */
-useEffect(() => {
-  if (!isClient) return;
+  useEffect(() => {
+    if (!isClient) return;
 
-  // if there is already at least one message, do nothing
-  if (messages.length > 0) return;
+    // if there is already at least one message, do nothing
+    if (messages.length > 0) return;
 
-  const welcomeMessage: UIMessage = {
-    id: `welcome-${Date.now()}`,
-    role: "assistant",
-    parts: [
-      {
-        type: "text",
-        text: WELCOME_MESSAGE,
-      },
-    ],
-  };
+    const welcomeMessage: UIMessage = {
+      id: `welcome-${Date.now()}`,
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          text: WELCOME_MESSAGE,
+        },
+      ],
+    };
 
-  setMessages([welcomeMessage]);
-  setDurations({});
-}, [isClient, messages.length, setMessages]);
+    setMessages([welcomeMessage]);
+    setDurations({});
+  }, [isClient, messages.length, setMessages]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -325,6 +334,41 @@ useEffect(() => {
     sendMessage({ text: data.message });
     form.reset();
   }
+
+  /**
+   * 🔹 Handle file upload (CV / resume etc.)
+   */
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+
+      if (!text.trim()) {
+        toast.error(
+          "Couldn't read that file. Please upload a text-based CV (PDF/DOCX exported as text or .txt)."
+        );
+        return;
+      }
+
+      // Send a message into the conversation containing the resume content
+      await sendMessage({
+        text:
+          `I have uploaded a document named "${file.name}". ` +
+          `Treat this as my CV/resume and use it to personalise my interview preparation, profiling, and question suggestions:\n\n` +
+          text,
+      });
+
+      toast.success(`${file.name} uploaded. I’ll use it to tailor your prep.`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong while reading the file.");
+    } finally {
+      // allow uploading the same file again later
+      e.target.value = "";
+    }
+  };
 
   /**
    * NEW: create a fresh conversation and switch to it
@@ -370,7 +414,7 @@ useEffect(() => {
     }
   }
 
-    /**
+  /**
    * Delete a conversation from the sidebar
    */
   function handleDeleteConversation(id: string) {
@@ -425,11 +469,11 @@ useEffect(() => {
     <div className="flex h-screen font-sans dark:bg-black">
       {/* LEFT: sidebar with fixed New + scrollable previous chats */}
       <ChatSidebar
-      conversations={sidebarConversations}
-      activeId={activeConversationId}
-      onSelect={handleSelectConversation}
-      onNewChat={handleNewChat}
-      onDelete={handleDeleteConversation}
+        conversations={sidebarConversations}
+        activeId={activeConversationId}
+        onSelect={handleSelectConversation}
+        onNewChat={handleNewChat}
+        onDelete={handleDeleteConversation}
       />
 
       {/* RIGHT: existing chat UI */}
@@ -438,25 +482,24 @@ useEffect(() => {
         <div className="fixed top-0 left-64 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
           <div className="relative overflow-visible">
             <ChatHeader>
-  <ChatHeaderBlock />
-  <ChatHeaderBlock className="justify-center items-center">
-    <Avatar className="size-8 ring-1 ring-primary">
-      <AvatarImage src="/bits2boards__1_-removebg-preview.png" />
-      <AvatarFallback>
-        <Image
-          src="/bits2boards__1_-removebg-preview.png.png"
-          alt="Logo"
-          width={36}
-          height={36}
-        />
-      </AvatarFallback>
-    </Avatar>
-    <p className="tracking-tight">{AI_NAME}</p>
-  </ChatHeaderBlock>
-  {/* empty right block to balance layout */}
-  <ChatHeaderBlock className="justify-end" />
-</ChatHeader>
-
+              <ChatHeaderBlock />
+              <ChatHeaderBlock className="justify-center items-center">
+                <Avatar className="size-8 ring-1 ring-primary">
+                  <AvatarImage src="/bits2boards__1_-removebg-preview.png" />
+                  <AvatarFallback>
+                    <Image
+                      src="/bits2boards__1_-removebg-preview.png.png"
+                      alt="Logo"
+                      width={36}
+                      height={36}
+                    />
+                  </AvatarFallback>
+                </Avatar>
+                <p className="tracking-tight">{AI_NAME}</p>
+              </ChatHeaderBlock>
+              {/* empty right block to balance layout */}
+              <ChatHeaderBlock className="justify-end" />
+            </ChatHeader>
           </div>
         </div>
         <div className="h-screen overflow-y-auto px-5 py-4 w-full pt-[88px] pb-[150px]">
@@ -500,10 +543,28 @@ useEffect(() => {
                           Message
                         </FieldLabel>
                         <div className="relative h-13">
+                          {/* 🔹 Upload button on the left */}
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                            <label
+                              htmlFor="chat-file-upload"
+                              className="flex items-center justify-center w-8 h-8 rounded-full border bg-card hover:bg-accent cursor-pointer"
+                            >
+                              <Paperclip className="w-4 h-4" />
+                            </label>
+                            <input
+                              id="chat-file-upload"
+                              type="file"
+                              accept=".pdf,.doc,.docx,.txt"
+                              className="hidden"
+                              onChange={handleFileUpload}
+                            />
+                          </div>
+
+                          {/* Text input with extra left padding */}
                           <Input
                             {...field}
                             id="chat-form-message"
-                            className="h-15 pr-15 pl-5 bg-card rounded-[20px]"
+                            className="h-15 pr-15 pl-12 bg-card rounded-[20px]"
                             placeholder="Type your message here..."
                             disabled={status === "streaming"}
                             aria-invalid={fieldState.invalid}
