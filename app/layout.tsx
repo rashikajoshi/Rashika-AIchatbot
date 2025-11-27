@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MyAI3",
-  description: "MyAI3",
+  title: "Prep2Pounce",
+  description: "Prep2Pounce — AI assistant for smarter interview prep",
 };
 
 export default function RootLayout({
