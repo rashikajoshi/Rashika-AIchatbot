@@ -37,37 +37,47 @@ export function ChatSidebar({
         collapsed ? "w-16" : "w-64"
       )}
     >
-      {/* FIXED HEADER WITH NEW CHAT BUTTON */}
+      {/* HEADER */}
       <div className="p-2 border-b flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={cn("text-sm font-semibold", collapsed && "sr-only")}>
-            Chats
-          </span>
-
-          {/* new chat button - show smaller icon when collapsed */}
-          <Button size="sm" onClick={onNewChat} title={CLEAR_CHAT_TEXT}>
+        {/* Expanded header content */}
+        {!collapsed ? (
+          <div className="flex items-center gap-2 w-full justify-between">
             <div className="flex items-center gap-2">
-              <Plus className="w-3 h-3" />
-              {!collapsed && <span>{CLEAR_CHAT_TEXT}</span>}
-            </div>
-          </Button>
-        </div>
+              <span className="text-sm font-semibold">Chats</span>
 
-        <div className="flex items-center gap-1">
-          {/* collapse/expand toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onToggleCollapse && onToggleCollapse()}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? (
+              <Button size="sm" onClick={onNewChat} title={CLEAR_CHAT_TEXT}>
+                <div className="flex items-center gap-2">
+                  <Plus className="w-3 h-3" />
+                  <span>{CLEAR_CHAT_TEXT}</span>
+                </div>
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onToggleCollapse && onToggleCollapse()}
+                title="Collapse sidebar"
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          // Collapsed header: only show the expand toggle (no plus, no title)
+          <div className="w-full flex items-center justify-start">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onToggleCollapse && onToggleCollapse()}
+              title="Expand sidebar"
+              className="ml-1"
+            >
               <ChevronsRight className="w-4 h-4" />
-            ) : (
-              <ChevronsLeft className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* SCROLLABLE PREVIOUS CHATS */}
