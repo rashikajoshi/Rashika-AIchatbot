@@ -33,13 +33,12 @@ export function ChatSidebar({
   return (
     <aside
       className={cn(
-        "h-screen border-r bg-sidebar flex flex-col transition-width duration-150 ease-in-out",
+        "h-screen border-r bg-sidebar flex flex-col transition-all duration-150 ease-in-out",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* HEADER */}
       <div className="p-2 border-b flex items-center justify-between">
-        {/* Expanded header content */}
         {!collapsed ? (
           <div className="flex items-center gap-2 w-full justify-between">
             <div className="flex items-center gap-2">
@@ -53,73 +52,70 @@ export function ChatSidebar({
               </Button>
             </div>
 
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onToggleCollapse && onToggleCollapse()}
-                title="Collapse sidebar"
-              >
-                <ChevronsLeft className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        ) : (
-          // Collapsed header: only show the expand toggle (no plus, no title)
-          <div className="w-full flex items-center justify-start">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onToggleCollapse && onToggleCollapse()}
-              title="Expand sidebar"
-              className="ml-1"
+              title="Collapse sidebar"
             >
-              <ChevronsRight className="w-4 h-4" />
+              <ChevronsLeft className="w-4 h-4" />
             </Button>
           </div>
+        ) : (
+          // COLLAPSED HEADER: ONLY EXPAND BUTTON
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onToggleCollapse && onToggleCollapse()}
+            title="Expand sidebar"
+            className="ml-1"
+          >
+            <ChevronsRight className="w-4 h-4" />
+          </Button>
         )}
       </div>
 
       {/* SCROLLABLE PREVIOUS CHATS */}
-      <ScrollArea className="flex-1">
-        <div className="flex flex-col gap-1 p-2">
-          {conversations.map((conv) => (
-            <button
-              key={conv.id}
-              onClick={() => onSelect(conv.id)}
-              className={cn(
-                "w-full text-left text-sm px-2 py-1 rounded-md hover:bg-accent truncate flex items-center justify-between",
-                conv.id === activeId && "bg-accent"
-              )}
-              title={conv.title || "Untitled chat"}
-            >
-              <span className={cn("truncate", collapsed && "sr-only")}>
-                {conv.title || "Untitled chat"}
-              </span>
-
-              {/* delete icon – stop click from selecting the conversation */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(conv.id);
-                }}
-                title="Delete conversation"
+      {!collapsed && (
+        <ScrollArea className="flex-1">
+          <div className="flex flex-col gap-1 p-2">
+            {conversations.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => onSelect(conv.id)}
+                className={cn(
+                  "w-full text-left text-sm px-2 py-1 rounded-md hover:bg-accent truncate flex items-center justify-between",
+                  conv.id === activeId && "bg-accent"
+                )}
+                title={conv.title || "Untitled chat"}
               >
-                <Trash2 className="w-3 h-3" />
-              </Button>
-            </button>
-          ))}
+                <span className="truncate">
+                  {conv.title || "Untitled chat"}
+                </span>
 
-          {conversations.length === 0 && (
-            <p className={cn("text-xs text-muted-foreground px-2 py-1", collapsed && "sr-only")}>
-              No previous chats yet.
-            </p>
-          )}
-        </div>
-      </ScrollArea>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(conv.id);
+                  }}
+                  title="Delete chat"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </button>
+            ))}
+
+            {conversations.length === 0 && (
+              <p className="text-xs text-muted-foreground px-2 py-1">
+                No previous chats yet.
+              </p>
+            )}
+          </div>
+        </ScrollArea>
+      )}
     </aside>
   );
 }
