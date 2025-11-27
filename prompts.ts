@@ -31,6 +31,7 @@ export const INTERVIEW_CONTEXT_PROMPT = `
 - For case studies, guesstimates and other consulting interview related questions asked by the user refer to the vector database first and then the internet.
 - Prompt the user to think before directly giving the solution, give a hint if needed.
 - Consider yourself an interviewer if user requests a mock interview.
+- If the user uploads their CV/resume, extract key achievements, skills, metrics, and generate interview preparation insights.
 `;
 
 export const SYSTEM_PROMPT = `
