@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
+
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -12,13 +13,13 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
-import { ArrowUp, Loader2, Square } from "lucide-react";
+import { ArrowUp, Loader2, Square, Music, VolumeX } from "lucide-react";
 import { MessageWall } from "@/components/messages/message-wall";
 import { ChatHeader } from "@/app/parts/chat-header";
 import { ChatHeaderBlock } from "@/app/parts/chat-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UIMessage } from "ai";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AI_NAME, CLEAR_CHAT_TEXT, OWNER_NAME, WELCOME_MESSAGE } from "@/config";
 import Image from "next/image";
 import Link from "next/link";
@@ -166,6 +167,10 @@ export default function Chat() {
   const [durations, setDurations] = useState<Record<string, number>>({});
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // Music state + audio ref
+  const [musicOn, setMusicOn] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   // NEW: list of conversations + active one
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<
@@ -309,6 +314,31 @@ export default function Chat() {
     setMessages([welcomeMessage]);
     setDurations({});
   }, [isClient, messages.length, setMessages]);
+
+  // Music play/pause effect
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const audio = audioRef.current;
+
+    if (musicOn) {
+      // attempt to play; modern browsers require user gesture — this is user-initiated
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.then === "function") {
+        playPromise.catch((err) => {
+          // ignore autoplay errors; optionally notify user
+          console.warn("Audio play prevented:", err);
+        });
+      }
+    } else {
+      audio.pause();
+      try {
+        audio.currentTime = 0;
+      } catch {
+        // some browsers may throw if resetting; ignore
+      }
+    }
+  }, [musicOn]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -460,8 +490,23 @@ export default function Chat() {
                 </Avatar>
                 <p className="tracking-tight">{AI_NAME}</p>
               </ChatHeaderBlock>
-              {/* empty right block to balance layout */}
-              <ChatHeaderBlock className="justify-end" />
+
+              {/* TOP-RIGHT: Music toggle button (new feature) */}
+              <ChatHeaderBlock className="justify-end items-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMusicOn((s) => !s)}
+                  title={musicOn ? "Turn music off" : "Turn music on"}
+                  aria-pressed={musicOn}
+                >
+                  {musicOn ? (
+                    <Music className="size-4" />
+                  ) : (
+                    <VolumeX className="size-4" />
+                  )}
+                </Button>
+              </ChatHeaderBlock>
             </ChatHeader>
           </div>
         </div>
@@ -489,6 +534,15 @@ export default function Chat() {
             )}
           </div>
         </div>
+
+        {/* hidden audio element for lo-fi music (replace /lofi.mp3 with your file) */}
+        <audio
+          ref={audioRef}
+          src="/lofi.mp3"
+          loop
+          aria-hidden
+          className="hidden"
+        />
 
         {/* bottom input bar — also shifts left based on sidebar state */}
         <div className={`fixed bottom-0 ${leftOffsetClass} right-0 z-50 bg-linear-to-t from-background via-background/50 to-transparent dark:bg-black overflow-visible pt-13`}>
@@ -558,6 +612,10 @@ export default function Chat() {
             &nbsp;
             <Link href="/terms" className="underline">
               Terms of Use
+            </Link>
+            &nbsp;Powered by&nbsp;
+            <Link href="https://ringel.ai/" className="underline">
+              Ringel.AI
             </Link>
           </div>
         </div>
