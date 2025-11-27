@@ -13,13 +13,13 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
-import { ArrowUp, Eraser, Loader2, Plus, PlusIcon, Square } from "lucide-react";
+import { ArrowUp, Loader2, Square } from "lucide-react";
 import { MessageWall } from "@/components/messages/message-wall";
 import { ChatHeader } from "@/app/parts/chat-header";
 import { ChatHeaderBlock } from "@/app/parts/chat-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UIMessage } from "ai";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { AI_NAME, CLEAR_CHAT_TEXT, OWNER_NAME, WELCOME_MESSAGE } from "@/config";
 import Image from "next/image";
 import Link from "next/link";
@@ -165,7 +165,7 @@ const saveConversationsToStorage = (
 export default function Chat() {
   const [isClient, setIsClient] = useState(false);
   const [durations, setDurations] = useState<Record<string, number>>({});
-  //const welcomeMessageShownRef = useRef<boolean>(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // NEW: list of conversations + active one
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -288,31 +288,28 @@ export default function Chat() {
   };
 
   /**
-   * Welcome message for a truly new conversation (no messages yet)
+   * Welcome message for any conversation that currently has no messages
    */
-  /**
- * Welcome message for any conversation that currently has no messages
- */
-useEffect(() => {
-  if (!isClient) return;
+  useEffect(() => {
+    if (!isClient) return;
 
-  // if there is already at least one message, do nothing
-  if (messages.length > 0) return;
+    // if there is already at least one message, do nothing
+    if (messages.length > 0) return;
 
-  const welcomeMessage: UIMessage = {
-    id: `welcome-${Date.now()}`,
-    role: "assistant",
-    parts: [
-      {
-        type: "text",
-        text: WELCOME_MESSAGE,
-      },
-    ],
-  };
+    const welcomeMessage: UIMessage = {
+      id: `welcome-${Date.now()}`,
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          text: WELCOME_MESSAGE,
+        },
+      ],
+    };
 
-  setMessages([welcomeMessage]);
-  setDurations({});
-}, [isClient, messages.length, setMessages]);
+    setMessages([welcomeMessage]);
+    setDurations({});
+  }, [isClient, messages.length, setMessages]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -421,44 +418,55 @@ useEffect(() => {
     })
   );
 
+  // compute classes for left offset when sidebar is collapsed vs expanded
+  const leftOffsetClass = sidebarCollapsed ? "left-16" : "left-64";
+  const sidebarWidthClass = sidebarCollapsed ? "w-16" : "w-64";
+
   return (
     <div className="flex h-screen font-sans dark:bg-black">
       {/* LEFT: sidebar with fixed New + scrollable previous chats */}
-      <ChatSidebar
-      conversations={sidebarConversations}
-      activeId={activeConversationId}
-      onSelect={handleSelectConversation}
-      onNewChat={handleNewChat}
-      onDelete={handleDeleteConversation}
-      />
+      <div className={`${sidebarWidthClass} flex-shrink-0`}>
+        <ChatSidebar
+          conversations={sidebarConversations}
+          activeId={activeConversationId}
+          onSelect={handleSelectConversation}
+          onNewChat={handleNewChat}
+          onDelete={handleDeleteConversation}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((s) => !s)}
+        />
+      </div>
 
       {/* RIGHT: existing chat UI */}
       <main className="flex-1 w-full dark:bg-black h-screen relative">
+        {/* background watermark */}
         <div className="absolute inset-0 bg-[url('/bits2boards__1_-removebg-preview.png')] bg-center bg-no-repeat bg-contain opacity-10 pointer-events-none" />
-        <div className="fixed top-0 left-64 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
+
+        {/* top header — adjust left using inline class substitution */}
+        <div className={`fixed top-0 ${leftOffsetClass} right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16`}>
           <div className="relative overflow-visible">
             <ChatHeader>
-  <ChatHeaderBlock />
-  <ChatHeaderBlock className="justify-center items-center">
-    <Avatar className="size-8 ring-1 ring-primary">
-      <AvatarImage src="/bits2boards__1_-removebg-preview.png" />
-      <AvatarFallback>
-        <Image
-          src="/bits2boards__1_-removebg-preview.png.png"
-          alt="Logo"
-          width={36}
-          height={36}
-        />
-      </AvatarFallback>
-    </Avatar>
-    <p className="tracking-tight">{AI_NAME}</p>
-  </ChatHeaderBlock>
-  {/* empty right block to balance layout */}
-  <ChatHeaderBlock className="justify-end" />
-</ChatHeader>
-
+              <ChatHeaderBlock />
+              <ChatHeaderBlock className="justify-center items-center">
+                <Avatar className="size-8 ring-1 ring-primary">
+                  <AvatarImage src="/bits2boards__1_-removebg-preview.png" />
+                  <AvatarFallback>
+                    <Image
+                      src="/bits2boards__1_-removebg-preview.png.png"
+                      alt="Logo"
+                      width={36}
+                      height={36}
+                    />
+                  </AvatarFallback>
+                </Avatar>
+                <p className="tracking-tight">{AI_NAME}</p>
+              </ChatHeaderBlock>
+              {/* empty right block to balance layout */}
+              <ChatHeaderBlock className="justify-end" />
+            </ChatHeader>
           </div>
         </div>
+
         <div className="h-screen overflow-y-auto px-5 py-4 w-full pt-[88px] pb-[150px]">
           <div className="flex flex-col items-center justify-end min-h-full">
             {isClient ? (
@@ -482,7 +490,9 @@ useEffect(() => {
             )}
           </div>
         </div>
-        <div className="fixed bottom-0 left-64 right-0 z-50 bg-linear-to-t from-background via-background/50 to-transparent dark:bg-black overflow-visible pt-13">
+
+        {/* bottom input bar — also shifts left based on sidebar state */}
+        <div className={`fixed bottom-0 ${leftOffsetClass} right-0 z-50 bg-linear-to-t from-background via-background/50 to-transparent dark:bg-black overflow-visible pt-13`}>
           <div className="w-full px-5 pt-5 pb-1 items-center flex justify-center relative overflow-visible">
             <div className="message-fade-overlay" />
             <div className="max-w-3xl w-full">
