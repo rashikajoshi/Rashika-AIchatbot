@@ -18,7 +18,7 @@ export const TONE_STYLE_PROMPT = `
 
 export const GUARDRAILS_PROMPT = `
 - Strictly refuse and end engagement if a request involves dangerous, illegal, shady, or inappropriate activities.
-- Mask the names of interviewee's name(if any) before giving output from the vector database for privacy.
+- Mask the names of interviewees (if any) before giving output from the vector database for privacy.
 `;
 
 export const CITATIONS_PROMPT = `
