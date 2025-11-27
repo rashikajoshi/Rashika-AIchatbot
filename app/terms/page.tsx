@@ -13,13 +13,13 @@ export default function Terms() {
                     <ArrowLeftIcon className="w-4 h-4" />
                     Back to Chatbot
                 </Link>
-                <h1 className="text-3xl font-bold">MyAI3</h1>
+                <h1 className="text-3xl font-bold">Prep2Pounce</h1>
                 <h2 className="text-2xl font-semibold">Terms of Use / Disclaimer</h2>
 
                 <p className="text-gray-700">
                     The following terms of use govern access to and use of the Prep2Pounce
                     Assistant ("AI Chatbot"), an artificial intelligence tool provided by
-                    {OWNER_NAME} ("I", "me", or "myself"). By engaging with the AI
+                     {OWNER_NAME}. By engaging with the AI
                     Chatbot, you agree to these terms. If you do not agree, you may not
                     use the AI Chatbot.
                 </p>
@@ -61,12 +61,12 @@ export default function Terms() {
                             the fullest extent permitted by law:
                             <ul className="list-disc list-inside ml-6 mt-2 space-y-2">
                                 <li>
-                                    {OWNER_NAME} disclaims all warranties, express or implied,
+                                    {OWNER_NAME} disclaim all warranties, express or implied,
                                     including but not limited to warranties of merchantability,
                                     fitness for a particular purpose, and non-infringement.
                                 </li>
                                 <li>
-                                    {OWNER_NAME} is not liable for any errors, inaccuracies, or
+                                    {OWNER_NAME} are not liable for any errors, inaccuracies, or
                                     omissions in the information provided by the AI Chatbot.
                                 </li>
                             </ul>
@@ -85,12 +85,12 @@ export default function Terms() {
                             <span className="font-semibold">
                                 Modification or Discontinuation:
                             </span>{" "}
-                            I reserve the right to modify, suspend, or discontinue the AI
+                            We reserve the right to modify, suspend, or discontinue the AI
                             Chatbot's functionalities at any time without notice.
                         </li>
                         <li className="text-gray-700">
                             <span className="font-semibold">Future Fees:</span> While the AI
-                            Chatbot is currently provided free of charge, I reserve the right
+                            Chatbot is currently provided free of charge, we reserve the right
                             to implement a fee for its use at any time.
                         </li>
                     </ol>
@@ -168,7 +168,7 @@ export default function Terms() {
                     <h3 className="text-xl font-semibold">Indemnification</h3>
                     <p className="text-gray-700">
                         By using the AI Chatbot, you agree to indemnify and hold harmless
-                        {OWNER_NAME}, their collaborators, partners, affiliated entities, and
+                         {OWNER_NAME}, their collaborators, partners, affiliated entities, and
                         representatives from any claims, damages, losses, or liabilities
                         arising out of your use of the AI Chatbot or violation of these
                         terms.
