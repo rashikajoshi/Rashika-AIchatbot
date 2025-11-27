@@ -613,10 +613,6 @@ export default function Chat() {
             <Link href="/terms" className="underline">
               Terms of Use
             </Link>
-            &nbsp;Powered by&nbsp;
-            <Link href="https://ringel.ai/" className="underline">
-              Ringel.AI
-            </Link>
           </div>
         </div>
       </main>
