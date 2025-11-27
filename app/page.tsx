@@ -11,19 +11,16 @@ import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
 import {
   ArrowUp,
-  Eraser,
   Loader2,
-  Plus,
-  PlusIcon,
   Square,
-  Paperclip, // 🔹 NEW
+  Paperclip,
 } from "lucide-react";
 import { MessageWall } from "@/components/messages/message-wall";
 import { ChatHeader } from "@/app/parts/chat-header";
 import { ChatHeaderBlock } from "@/app/parts/chat-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UIMessage } from "ai";
-import { useEffect, useState, useRef, type ChangeEvent } from "react"; // 🔹 ChangeEvent added
+import { useEffect, useState, useRef, type ChangeEvent } from "react";
 import {
   AI_NAME,
   CLEAR_CHAT_TEXT,
@@ -32,10 +29,7 @@ import {
 } from "@/config";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ChatSidebar,
-  ConversationSummary,
-} from "@/components/ai-elements/chat-sidebar";
+import { ChatSidebar, ConversationSummary } from "@/components/ai-elements/chat-sidebar";
 
 const formSchema = z.object({
   message: z
@@ -58,8 +52,7 @@ const loadMessagesFromStorage = (): {
   messages: UIMessage[];
   durations: Record<string, number>;
 } => {
-  if (typeof window === "undefined")
-    return { messages: [], durations: {} };
+  if (typeof window === "undefined") return { messages: [], durations: {} };
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return { messages: [], durations: {} };
@@ -75,10 +68,7 @@ const loadMessagesFromStorage = (): {
   }
 };
 
-const saveMessagesToStorage = (
-  messages: UIMessage[],
-  durations: Record<string, number>
-) => {
+const saveMessagesToStorage = (messages: UIMessage[], durations: Record<string, number>) => {
   if (typeof window === "undefined") return;
   try {
     const data: StorageData = { messages, durations };
@@ -92,10 +82,7 @@ const saveMessagesToStorage = (
  * Helper: safely derive a title from first user message
  * Handles both `parts`-based messages and simple `content` strings.
  */
-const getTitleFromMessages = (
-  msgs: UIMessage[],
-  fallback: string
-): string => {
+const getTitleFromMessages = (msgs: UIMessage[], fallback: string): string => {
   const firstUser = msgs.find((m) => m.role === "user");
   if (!firstUser) return fallback;
 
@@ -103,9 +90,7 @@ const getTitleFromMessages = (
 
   // Newer AI SDK: message.parts array
   if (Array.isArray(anyMsg.parts)) {
-    const textPart = anyMsg.parts.find(
-      (p: any) => p && p.type === "text" && typeof p.text === "string"
-    );
+    const textPart = anyMsg.parts.find((p: any) => p && p.type === "text" && typeof p.text === "string");
     if (textPart) {
       return (textPart as any).text.slice(0, 40);
     }
@@ -133,21 +118,14 @@ type Conversation = {
 
 const CONVERSATIONS_KEY = "chat-conversations-v1";
 
-const loadConversationsFromStorage = (): {
-  conversations: Conversation[];
-  activeId?: string;
-} => {
-  if (typeof window === "undefined")
-    return { conversations: [], activeId: undefined };
+const loadConversationsFromStorage = (): { conversations: Conversation[]; activeId?: string } => {
+  if (typeof window === "undefined") return { conversations: [], activeId: undefined };
 
   try {
     const stored = localStorage.getItem(CONVERSATIONS_KEY);
     if (!stored) return { conversations: [], activeId: undefined };
 
-    const parsed = JSON.parse(stored) as {
-      conversations?: Conversation[];
-      activeId?: string;
-    };
+    const parsed = JSON.parse(stored) as { conversations?: Conversation[]; activeId?: string };
 
     return {
       conversations: parsed.conversations || [],
@@ -159,16 +137,10 @@ const loadConversationsFromStorage = (): {
   }
 };
 
-const saveConversationsToStorage = (
-  conversations: Conversation[],
-  activeId?: string
-) => {
+const saveConversationsToStorage = (conversations: Conversation[], activeId?: string) => {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(
-      CONVERSATIONS_KEY,
-      JSON.stringify({ conversations, activeId })
-    );
+    localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify({ conversations, activeId }));
   } catch (error) {
     console.error("Failed to save conversations to localStorage:", error);
   }
@@ -177,23 +149,15 @@ const saveConversationsToStorage = (
 export default function Chat() {
   const [isClient, setIsClient] = useState(false);
   const [durations, setDurations] = useState<Record<string, number>>({});
-
   // NEW: list of conversations + active one
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<
-    string | undefined
-  >(undefined);
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(undefined);
 
   // ORIGINAL single-chat bootstrap (still used as initial data)
-  const stored =
-    typeof window !== "undefined"
-      ? loadMessagesFromStorage()
-      : { messages: [], durations: {} };
+  const stored = typeof window !== "undefined" ? loadMessagesFromStorage() : { messages: [], durations: {} };
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
-  const { messages, sendMessage, status, stop, setMessages } = useChat({
-    messages: initialMessages,
-  });
+  const { messages, sendMessage, status, stop, setMessages } = useChat({ messages: initialMessages });
 
   /**
    * On mount: load conversations list.
@@ -201,11 +165,9 @@ export default function Chat() {
    */
   useEffect(() => {
     setIsClient(true);
-
     if (typeof window === "undefined") return;
 
-    const { conversations: storedConvs, activeId } =
-      loadConversationsFromStorage();
+    const { conversations: storedConvs, activeId } = loadConversationsFromStorage();
 
     if (storedConvs.length > 0) {
       setConversations(storedConvs);
@@ -224,16 +186,9 @@ export default function Chat() {
     const legacy = loadMessagesFromStorage();
     if (legacy.messages.length > 0) {
       const now = new Date().toISOString();
-      const id =
-        (typeof crypto !== "undefined" &&
-          "randomUUID" in crypto &&
-          crypto.randomUUID()) ||
-        `conv-${Date.now()}`;
+      const id = (typeof crypto !== "undefined" && "randomUUID" in crypto && crypto.randomUUID()) || `conv-${Date.now()}`;
 
-      const titleFromFirstUser = getTitleFromMessages(
-        legacy.messages,
-        "First chat"
-      );
+      const titleFromFirstUser = getTitleFromMessages(legacy.messages, "First chat");
 
       const conv: Conversation = {
         id,
@@ -264,10 +219,7 @@ export default function Chat() {
       const now = new Date().toISOString();
       const idx = prev.findIndex((c) => c.id === activeConversationId);
 
-      const titleFromFirstUser = getTitleFromMessages(
-        messages,
-        idx >= 0 ? prev[idx].title : "New chat"
-      );
+      const titleFromFirstUser = getTitleFromMessages(messages, idx >= 0 ? prev[idx].title : "New chat");
 
       const updated: Conversation = {
         id: activeConversationId,
@@ -278,10 +230,7 @@ export default function Chat() {
         updatedAt: now,
       };
 
-      const next =
-        idx >= 0
-          ? [...prev.slice(0, idx), updated, ...prev.slice(idx + 1)]
-          : [updated, ...prev];
+      const next = idx >= 0 ? [...prev.slice(0, idx), updated, ...prev.slice(idx + 1)] : [updated, ...prev];
 
       saveConversationsToStorage(next, activeConversationId);
       return next;
@@ -336,37 +285,105 @@ export default function Chat() {
   }
 
   /**
-   * 🔹 Handle file upload (CV / resume etc.)
+   * Robust file upload handler (client-side basic mode)
+   * - Limits file size
+   * - Reads file via FileReader for compatibility
+   * - Cleans binary garbage and truncates large text
+   * - Sends only a safe-size slice to the model (prevents runtime crashes)
    */
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    try {
-      const text = await file.text();
+    console.info("Uploading file:", file.name, file.type, file.size);
 
-      if (!text.trim()) {
-        toast.error(
-          "Couldn't read that file. Please upload a text-based CV (PDF/DOCX exported as text or .txt)."
-        );
-        return;
-      }
-
-      // Send a message into the conversation containing the resume content
-      await sendMessage({
-        text:
-          `I have uploaded a document named "${file.name}". ` +
-          `Treat this as my CV/resume and use it to personalise my interview preparation, profiling, and question suggestions:\n\n` +
-          text,
-      });
-
-      toast.success(`${file.name} uploaded. I’ll use it to tailor your prep.`);
-    } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong while reading the file.");
-    } finally {
-      // allow uploading the same file again later
+    // 1) Size guard (adjust limit if needed)
+    const MAX_BYTES = 2_000_000; // 2 MB
+    if (file.size > MAX_BYTES) {
+      toast.error(
+        `File too large. Please upload files smaller than ${Math.round(MAX_BYTES / 1_000_000)} MB (current: ${(file.size / 1_000_000).toFixed(2)} MB).`
+      );
       e.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onerror = (err) => {
+      console.error("FileReader error:", err);
+      toast.error("Could not read file. Try a different format (.txt/.pdf/.docx).");
+      e.target.value = "";
+    };
+
+    reader.onload = async () => {
+      try {
+        let text = String(reader.result ?? "");
+
+        // Remove non-printable control characters which often break processing
+        text = text.replace(/[\x00-\x08\x0E-\x1F\x7F-\x9F]/g, " ").trim();
+
+        if (!text) {
+          toast.error("Couldn't extract text from this file. Try uploading a text-based PDF or a .txt file.");
+          e.target.value = "";
+          return;
+        }
+
+        // Truncate to a safe size for sending to the model in one message
+        const SAFE_CHAR_LIMIT = 40_000;
+        let payloadText = text;
+        if (text.length > SAFE_CHAR_LIMIT) {
+          const head = text.slice(0, Math.floor(SAFE_CHAR_LIMIT * 0.6));
+          const tail = text.slice(-Math.floor(SAFE_CHAR_LIMIT * 0.4));
+          payloadText = head + "\n\n...[truncated]...\n\n" + tail;
+          console.warn(`Upload text truncated from ${text.length} -> ${payloadText.length} chars to avoid runtime issues.`);
+        }
+
+        const userMessage =
+          `User uploaded file: "${file.name}" (${Math.round(file.size / 1024)} KB).\n` +
+          `Treat this as the user's CV/resume. Use this content only for tailoring interview prep in this conversation.\n\n` +
+          payloadText;
+
+        try {
+          await sendMessage({ text: userMessage });
+          toast.success(`${file.name} uploaded — I’ll use it to tailor your prep.`);
+        } catch (sendErr) {
+          console.error("sendMessage error:", sendErr);
+          toast.error("Failed to send the uploaded file to the assistant. See console for details.");
+        }
+      } catch (err) {
+        console.error("Error handling uploaded file:", err);
+        toast.error("An unexpected error occurred while processing the file.");
+      } finally {
+        // allow re-uploading same file
+        e.target.value = "";
+      }
+    };
+
+    // Try reading as text first; fallback to array buffer if text read fails
+    try {
+      reader.readAsText(file);
+    } catch (err) {
+      console.error("reader.readAsText threw:", err);
+      const fallbackReader = new FileReader();
+      fallbackReader.onload = () => {
+        try {
+          const ab = fallbackReader.result as ArrayBuffer;
+          const decoded = new TextDecoder("utf-8", { fatal: false }).decode(ab);
+          // emulate reader.result and call onload handler
+          (reader as any).result = decoded;
+          (reader.onload as any)();
+        } catch (decodeErr) {
+          console.error("fallback decode error:", decodeErr);
+          toast.error("Failed to decode file content.");
+          e.target.value = "";
+        }
+      };
+      fallbackReader.onerror = (er) => {
+        console.error("fallbackReader error:", er);
+        toast.error("Could not read file.");
+        e.target.value = "";
+      };
+      fallbackReader.readAsArrayBuffer(file);
     }
   };
 
@@ -374,11 +391,7 @@ export default function Chat() {
    * NEW: create a fresh conversation and switch to it
    */
   function handleNewChat() {
-    const id =
-      (typeof crypto !== "undefined" &&
-        "randomUUID" in crypto &&
-        crypto.randomUUID()) ||
-      `conv-${Date.now()}`;
+    const id = (typeof crypto !== "undefined" && "randomUUID" in crypto && crypto.randomUUID()) || `conv-${Date.now()}`;
     const now = new Date().toISOString();
 
     const newConv: Conversation = {
@@ -458,12 +471,7 @@ export default function Chat() {
   }
 
   // data for sidebar: only id + title
-  const sidebarConversations: ConversationSummary[] = conversations.map(
-    (c) => ({
-      id: c.id,
-      title: c.title,
-    })
-  );
+  const sidebarConversations: ConversationSummary[] = conversations.map((c) => ({ id: c.id, title: c.title }));
 
   return (
     <div className="flex h-screen font-sans dark:bg-black">
@@ -487,12 +495,7 @@ export default function Chat() {
                 <Avatar className="size-8 ring-1 ring-primary">
                   <AvatarImage src="/bits2boards__1_-removebg-preview.png" />
                   <AvatarFallback>
-                    <Image
-                      src="/bits2boards__1_-removebg-preview.png.png"
-                      alt="Logo"
-                      width={36}
-                      height={36}
-                    />
+                    <Image src="/bits2boards__1_-removebg-preview.png.png" alt="Logo" width={36} height={36} />
                   </AvatarFallback>
                 </Avatar>
                 <p className="tracking-tight">{AI_NAME}</p>
@@ -502,16 +505,12 @@ export default function Chat() {
             </ChatHeader>
           </div>
         </div>
+
         <div className="h-screen overflow-y-auto px-5 py-4 w-full pt-[88px] pb-[150px]">
           <div className="flex flex-col items-center justify-end min-h-full">
             {isClient ? (
               <>
-                <MessageWall
-                  messages={messages}
-                  status={status}
-                  durations={durations}
-                  onDurationChange={handleDurationChange}
-                />
+                <MessageWall messages={messages} status={status} durations={durations} onDurationChange={handleDurationChange} />
                 {status === "submitted" && (
                   <div className="flex justify-start max-w-3xl w-full">
                     <Loader2 className="size-4 animate-spin text-muted-foreground" />
@@ -525,6 +524,7 @@ export default function Chat() {
             )}
           </div>
         </div>
+
         <div className="fixed bottom-0 left-64 right-0 z-50 bg-linear-to-t from-background via-background/50 to-transparent dark:bg-black overflow-visible pt-13">
           <div className="w-full px-5 pt-5 pb-1 items-center flex justify-center relative overflow-visible">
             <div className="message-fade-overlay" />
@@ -536,28 +536,16 @@ export default function Chat() {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel
-                          htmlFor="chat-form-message"
-                          className="sr-only"
-                        >
+                        <FieldLabel htmlFor="chat-form-message" className="sr-only">
                           Message
                         </FieldLabel>
                         <div className="relative h-13">
-                          {/* 🔹 Upload button on the left */}
+                          {/* Upload button on the left */}
                           <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                            <label
-                              htmlFor="chat-file-upload"
-                              className="flex items-center justify-center w-8 h-8 rounded-full border bg-card hover:bg-accent cursor-pointer"
-                            >
+                            <label htmlFor="chat-file-upload" className="flex items-center justify-center w-8 h-8 rounded-full border bg-card hover:bg-accent cursor-pointer">
                               <Paperclip className="w-4 h-4" />
                             </label>
-                            <input
-                              id="chat-file-upload"
-                              type="file"
-                              accept=".pdf,.doc,.docx,.txt"
-                              className="hidden"
-                              onChange={handleFileUpload}
-                            />
+                            <input id="chat-file-upload" type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" onChange={handleFileUpload} />
                           </div>
 
                           {/* Text input with extra left padding */}
@@ -577,23 +565,12 @@ export default function Chat() {
                             }}
                           />
                           {(status == "ready" || status == "error") && (
-                            <Button
-                              className="absolute right-3 top-3 rounded-full"
-                              type="submit"
-                              disabled={!field.value.trim()}
-                              size="icon"
-                            >
+                            <Button className="absolute right-3 top-3 rounded-full" type="submit" disabled={!field.value.trim()} size="icon">
                               <ArrowUp className="size-4" />
                             </Button>
                           )}
                           {(status == "streaming" || status == "submitted") && (
-                            <Button
-                              className="absolute right-2 top-2 rounded-full"
-                              size="icon"
-                              onClick={() => {
-                                stop();
-                              }}
-                            >
+                            <Button className="absolute right-2 top-2 rounded-full" size="icon" onClick={() => stop()}>
                               <Square className="size-4" />
                             </Button>
                           )}
@@ -605,6 +582,7 @@ export default function Chat() {
               </form>
             </div>
           </div>
+
           <div className="w-full px-5 py-3 items-center flex justify-center text-xs text-muted-foreground">
             © {new Date().getFullYear()} {OWNER_NAME}
             &nbsp;
