@@ -33,8 +33,7 @@ export const DATE_AND_TIME = getDateAndTime();
 export const AI_NAME = "Prep2Pounce";
 export const OWNER_NAME = "Rashika Joshi and Mahiya Poddar";
 
-export const WELCOME_MESSAGE = `Hello! I'm ${AI_NAME}, an AI assistant here to help you prep for your interviews! Let's get started!`
-
+export const WELCOME_MESSAGE = `Hey there! I’m ${AI_NAME} — your AI partner for smarter, confident interview prep. Ready when you are!
 export const CLEAR_CHAT_TEXT = "New";
 
 export const MODERATION_DENIAL_MESSAGE_SEXUAL = "I can't discuss explicit sexual content. Please ask something else.";
